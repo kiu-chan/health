@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health/src/login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatelessWidget {
   final VoidCallback onChatSelected;
@@ -9,6 +11,41 @@ class HomePage extends StatelessWidget {
     required this.onChatSelected,
     required this.onHealthInfoSelected,
   }) : super(key: key);
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +61,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 24),
                 _buildGuideSection(),
                 const SizedBox(height: 24),
-                _buildActionButtons(),
+                _buildActionButtons(context),
                 const SizedBox(height: 24),
                 _buildWelcomeCard(),
               ],
@@ -198,7 +235,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     return Column(
       children: [
         _buildActionButton(
@@ -219,7 +256,7 @@ class HomePage extends StatelessWidget {
           'Đăng xuất',
           Icons.logout,
           Colors.red,
-          () {},
+          () => _handleLogout(context),
         ),
       ],
     );
@@ -268,53 +305,64 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildWelcomeCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade100, Colors.green.shade50],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    return FutureBuilder<String>(
+      future: _getUsername(),
+      builder: (context, snapshot) {
+        final username = snapshot.data ?? '';
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green.shade100, Colors.green.shade50],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: Icon(Icons.celebration, color: Colors.green.shade700),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Chào mừng monlycute, hãy khám phá các tính năng của ứng dụng chăm sóc sức khỏe tinh thần nhé!',
-              style: TextStyle(
-                color: Colors.green.shade700,
-                fontSize: 14,
-                height: 1.4,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.green.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.celebration, color: Colors.green.shade700),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Chào mừng $username, hãy khám phá các tính năng của ứng dụng chăm sóc sức khỏe tinh thần nhé!',
+                  style: TextStyle(
+                    color: Colors.green.shade700,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  Future<String> _getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('username') ?? '';
   }
 }

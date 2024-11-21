@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health/src/auth_wrapper.dart';
 import 'package:health/src/pages/select_page.dart';
 
 class MyApp extends StatefulWidget {
@@ -13,9 +14,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SelectPage(),
+    return AuthWrapper(
+      child: const SelectPage(),
     );
   }
 }
